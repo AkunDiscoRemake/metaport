@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MetaPort Android Manifest - Cardboard VR + ARCore + OpenXR Monado -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.metaport.cardboardxr">
+
+    <!-- Permissions for Cardboard VR + MR -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- ARCore -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <meta-data android:name="com.google.ar.core" android:value="required" />
+    
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true" />
+
+    <!-- Cardboard -->
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/app_icon"
+        android:label="MetaPort"
+        android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+        android:hardwareAccelerated="true"
+        android:extractNativeLibs="true"
+        android:requestLegacyExternalStorage="true">
+
+        <!-- Main Activity - Cardboard VR -->
+        <activity
+            android:name="com.unity3d.player.UnityPlayerActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density"
+            android:hardwareAccelerated="true"
+            android:resizeableActivity="false">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="com.google.intent.category.CARDBOARD" />
+            </intent-filter>
+
+            <!-- Cardboard VR intent -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="com.google.intent.category.CARDBOARD" />
+            </intent-filter>
+
+            <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+            <meta-data android:name="unityplayer.SkipPermissionsDialog" android:value="false" />
+        </activity>
+
+        <!-- ARCore Session -->
+        <meta-data android:name="com.google.ar.core" android:value="required" />
+
+        <!-- Monado OpenXR Runtime Service (optional) -->
+        <service
+            android:name="org.freedesktop.monado.openxr_runtime.MonadoService"
+            android:enabled="false"
+            android:exported="false" />
+
+    </application>
+
+    <!-- OpenXR -->
+    <queries>
+        <package android:name="org.freedesktop.monado.openxr_runtime" />
+        <package android:name="com.google.ar.core" />
+    </queries>
+
+</manifest>

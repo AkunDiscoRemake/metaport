@@ -1,0 +1,20 @@
+#!/bin/sh
+# Minimal gradlew that uses system gradle if wrapper jar missing
+DIR=$(cd "$(dirname "$0")" && pwd)
+JAR="$DIR/gradle/wrapper/gradle-wrapper.jar"
+if [ -f "$JAR" ] && [ -s "$JAR" ]; then
+  if [ -n "$JAVA_HOME" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+  else
+    JAVA="java"
+  fi
+  exec "$JAVA" -classpath "$JAR" org.gradle.wrapper.GradleWrapperMain "$@"
+else
+  echo "Wrapper jar not found or empty, trying system gradle..."
+  if command -v gradle >/dev/null 2>&1; then
+    exec gradle "$@"
+  else
+    echo "No gradle found, installing via apt is handled by GitHub Action"
+    exit 1
+  fi
+fi

@@ -1,0 +1,37 @@
+// MetaPort mainTemplate.gradle - Cardboard + ARCore + Monado OpenXR
+apply plugin: 'com.android.library'
+
+dependencies {
+    implementation 'com.google.ar:core:1.42.0'
+    implementation 'com.google.xr:cardboard:1.12.0'
+    implementation 'org.freedesktop.monado:openxr_runtime:0.1.0'
+    implementation 'com.google.mediapipe:tasks-vision:0.10.8'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
+
+android {
+    compileSdkVersion 34
+    buildToolsVersion '34.0.0'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 34
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
+        // ARCore
+        manifestPlaceholders = [arCoreApk: "required"]
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        pickFirst '**/libmediapipe_jni.so'
+        pickFirst '**/libarcore_sdk_c.so'
+        pickFirst '**/libcardboard_api.so'
+    }
+}
