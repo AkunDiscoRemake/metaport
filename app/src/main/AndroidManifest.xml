@@ -28,12 +28,13 @@
 
         <!-- ARCore is optional: without "Google Play Services for AR" the app
              still runs in 3DOF stereo VR instead of 6DOF SLAM. -->
+        <!-- "optional": the app still runs in 3DOF stereo VR when Google Play
+             Services for AR is not installed. Note that min_apk_version is
+             deliberately NOT declared here — the ARCore AAR contributes its own
+             value and a duplicate makes the manifest merger fail. -->
         <meta-data
             android:name="com.google.ar.core"
             android:value="optional" />
-        <meta-data
-            android:name="com.google.ar.core.min_apk_version"
-            android:value="241" />
 
         <activity
             android:name=".MetaPortActivity"
