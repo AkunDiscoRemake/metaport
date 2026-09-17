@@ -65,4 +65,6 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.7.1'
     // ARCore: 6DOF SLAM (VIO), plane / environment tracking, anchors, depth, camera passthrough.
     implementation "com.google.ar:core:$arcore_version"
+
+    testImplementation 'junit:junit:4.13.2'
 }
