@@ -93,11 +93,11 @@ class NebulaVoid : Environment3D() {
 
         // Orbital rings around the play space.
         Mat4.compose(model, ctx.headX, 1.4f, ctx.headZ, 0f, 0f, 0f, 9f, 9f, 9f)
-        Mat4.multiply(model, 0, model, 0, tiltA)
+        Mat4.multiply(model, 0, model, 0, tiltA, 0)
         scene.push(ringBig, ringMat, model, Scene.LAYER_TRANSPARENT)
 
         Mat4.compose(model, ctx.headX, 1.4f, ctx.headZ, 0f, 0f, 0f, 13f, 13f, 13f)
-        Mat4.multiply(model, 0, model, 0, tiltB)
+        Mat4.multiply(model, 0, model, 0, tiltB, 0)
         scene.push(ringSmall, ringMat, model, Scene.LAYER_TRANSPARENT)
 
         // Central light core far below, giving the void a focal point.

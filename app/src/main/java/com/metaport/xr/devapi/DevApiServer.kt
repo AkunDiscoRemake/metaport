@@ -44,9 +44,8 @@ class DevApiServer(private val port: Int = 8765) {
     var host: Host? = null
     var running = false
         private set
-    var requestsServed: Long
+    val requestsServed: Long
         get() = served.get()
-        private set
 
     private val served = AtomicLong()
     private var server: ServerSocket? = null

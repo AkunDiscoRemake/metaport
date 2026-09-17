@@ -204,7 +204,7 @@ class LibraryScreen(private val rt: RuntimeApi) {
 
         val perPage = 6
         for ((i, g) in games.withIndex()) {
-            val b = Button(g.title, Theme.TEXT_BODY) { rt.launchGame(g.id) }
+            val b = Button(g.title, Theme.TEXT_BODY) { rt.startGame(g.id) }
             b.subtitle = "${g.category} · ${g.tagline}" + if (g.requiresHands) " · hands recommended" else ""
             b.accentIndex = g.accentIndex
             b.width = 1.18f
