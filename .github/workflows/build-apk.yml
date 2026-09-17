@@ -66,22 +66,27 @@ jobs:
 
       - name: Compile + assemble APKs
         run: |
-          set -o pipefail
+          # NB: GitHub's default run shell is `bash -e`, so a failing Gradle
+          # pipeline would abort this step before the diagnostics below run.
+          set +e
           gradle assembleDebug assembleRelease --stacktrace --no-daemon 2>&1 | tee /tmp/gradle.log
           STATUS=${PIPESTATUS[0]}
+          set -e
+
           echo "=== APKs ==="
           find app/build/outputs -name '*.apk' -type f -exec ls -lh {} \; || true
-          # Surface compiler diagnostics as check-run annotations so they are
-          # readable through the GitHub API.
+
+          # Surface compiler diagnostics as check-run annotations, which stay
+          # readable through the GitHub API even when raw logs are unreachable.
           if [ "$STATUS" -ne 0 ]; then
             echo "=== Compiler diagnostics ==="
-            grep -aE "^e: |error:|Caused by:|What went wrong|Execution failed for task" /tmp/gradle.log \
-              | head -60 | while IFS= read -r line; do
-                  short=$(printf '%s' "$line" | cut -c1-260)
-                  echo "::error title=MetaPort build::${short}"
+            grep -aE "^e: |^error: |Caused by:|What went wrong|Execution failed for task|A problem occurred" /tmp/gradle.log \
+              | head -45 | tr -d '\r' | while IFS= read -r line; do
+                  short=$(printf '%s' "$line" | cut -c1-220)
+                  printf '::error title=MetaPort build::%s\n' "$short"
                 done
-            ERRS=$(grep -acE "^e: " /tmp/gradle.log || true)
-            echo "::error title=Kotlin errors::total kotlin compiler errors: ${ERRS}"
+            ERRS=$(grep -acE "^e: " /tmp/gradle.log 2>/dev/null || echo 0)
+            printf '::error title=Summary::gradle exit %s, kotlin compiler errors: %s\n' "$STATUS" "$ERRS"
           fi
           exit $STATUS
 
