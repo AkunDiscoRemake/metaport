@@ -193,9 +193,16 @@ class MetaPortLogicTest {
         h.joints[HandModel.THUMB_TIP * 3] = h.joints[HandModel.INDEX_TIP * 3]
         h.joints[HandModel.THUMB_TIP * 3 + 1] = h.joints[HandModel.INDEX_TIP * 3 + 1]
         h.joints[HandModel.THUMB_TIP * 3 + 2] = h.joints[HandModel.INDEX_TIP * 3 + 2]
-        val g = HandGestureResolver().resolve(h, 0.016f)
+        val r = HandGestureResolver()
+        // The gesture itself must land on the first frame.
+        assertEquals(HandModel.GESTURE_PINCH, r.resolve(h, 0.016f))
+
+        // pinchAmount is exponentially smoothed (lambda 18, ~55 ms time constant)
+        // so it converges over several frames rather than in one.
+        var g = HandModel.GESTURE_PINCH
+        for (i in 0 until 20) g = r.resolve(h, 0.016f)
         assertEquals(HandModel.GESTURE_PINCH, g)
-        assertTrue("pinch amount should be high: ${h.pinchAmount}", h.pinchAmount > 0.5f)
+        assertTrue("pinchAmount should converge near 1, was ${h.pinchAmount}", h.pinchAmount > 0.8f)
     }
 
     @Test
