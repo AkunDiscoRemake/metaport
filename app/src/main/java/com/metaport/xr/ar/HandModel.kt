@@ -201,7 +201,17 @@ class HandModel(val isRight: Boolean) {
 class HandGestureResolver {
     var pinchThreshold = 0.45f
     var openThreshold = 0.75f
+
+    /**
+     * A candidate gesture must hold for this long before it replaces the current
+     * one. Without it a hand hovering on a boundary flickers between two states
+     * every frame, which makes UI activation unreliable.
+     */
+    var switchDelay = 0.09f
+
     private var lastGesture = HandModel.GESTURE_NONE
+    private var candidate = HandModel.GESTURE_NONE
+    private var candidateTime = 0f
 
     fun resolve(h: HandModel, dt: Float): Int {
         if (!h.visible) { lastGesture = HandModel.GESTURE_NONE; return HandModel.GESTURE_NONE }
@@ -223,15 +233,36 @@ class HandGestureResolver {
         h.spread = extended / 5f
 
         val g = when {
-            pinch < pinchThreshold * 0.6f && extended <= 2 -> HandModel.GESTURE_PINCH
+            // A fist is unambiguous — every finger folded back toward the wrist —
+            // and must win over pinch, because a fist also brings the thumb tip
+            // close to the index tip.
             extended == 0 -> HandModel.GESTURE_FIST
+            // Pinch depends only on thumb-index proximity. The other fingers stay
+            // free, which is the natural pose and matches how OpenXR / MediaPipe /
+            // ARCore hand tracking define a pinch.
+            pinch < pinchThreshold * 0.6f -> HandModel.GESTURE_PINCH
             extended >= 4 -> HandModel.GESTURE_OPEN
             extended == 2 -> HandModel.GESTURE_VICTORY
             else -> HandModel.GESTURE_POINT
         }
-        // Hysteresis so gestures do not flicker at the boundary.
-        h.gesture = if (g != lastGesture) g else lastGesture
-        lastGesture = h.gesture
+
+        // Hysteresis: the first classification is immediate, later changes must
+        // be stable for switchDelay seconds before they take effect.
+        if (g == lastGesture) {
+            candidate = g
+            candidateTime = 0f
+            h.gesture = g
+        } else {
+            if (g != candidate) { candidate = g; candidateTime = 0f }
+            candidateTime += dt
+            if (lastGesture == HandModel.GESTURE_NONE || candidateTime >= switchDelay) {
+                lastGesture = g
+                candidateTime = 0f
+                h.gesture = g
+            } else {
+                h.gesture = lastGesture
+            }
+        }
         return h.gesture
     }
 }

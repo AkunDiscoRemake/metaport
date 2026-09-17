@@ -143,12 +143,11 @@ class MetaPortLogicTest {
         fun set(j: Int, x: Float, y: Float, z: Float) {
             h.joints[j * 3] = x; h.joints[j * 3 + 1] = y; h.joints[j * 3 + 2] = z
         }
-        val spread = if (open) 0.055f else 0.012f
-        val reach = if (open) 1f else 0.35f
-        set(HandModel.THUMB_CMC, spread * 0.6f, 0.03f * reach, 0f)
-        set(HandModel.THUMB_MCP, spread * 1.1f, 0.06f * reach, 0f)
-        set(HandModel.THUMB_IP, spread * 1.4f, 0.09f * reach, 0f)
-        set(HandModel.THUMB_TIP, spread * 1.6f, 0.12f * reach, 0f)
+        val spread = if (open) 0.055f else 0.030f
+        set(HandModel.THUMB_CMC, spread * 0.6f, 0.030f, 0f)
+        set(HandModel.THUMB_MCP, spread * 1.1f, 0.060f, 0f)
+        set(HandModel.THUMB_IP, spread * 1.4f, if (open) 0.090f else 0.045f, 0f)
+        set(HandModel.THUMB_TIP, spread * 1.6f, if (open) 0.120f else 0.020f, 0f)
         val fingers = listOf(HandModel.INDEX_MCP to -spread, HandModel.MIDDLE_MCP to 0f,
             HandModel.RING_MCP to spread, HandModel.PINKY_MCP to spread * 2f)
         for ((mcp, off) in fingers) {
@@ -158,10 +157,19 @@ class MetaPortLogicTest {
                 HandModel.RING_MCP -> 0.10f
                 else -> 0.085f
             }
-            set(mcp, off, base * 0.85f, 0f)
-            set(mcp + 1, off, base * 0.85f + 0.04f * reach, 0f)
-            set(mcp + 2, off, base * 0.85f + 0.07f * reach, 0f)
-            set(mcp + 3, off, base * 0.85f + 0.10f * reach, 0f)
+            val mcpY = base * 0.85f
+            set(mcp, off, mcpY, 0f)
+            if (open) {
+                set(mcp + 1, off, mcpY + 0.040f, 0f)
+                set(mcp + 2, off, mcpY + 0.070f, 0f)
+                set(mcp + 3, off, mcpY + 0.100f, 0f)
+            } else {
+                // Folded back: the tips end up closer to the wrist than the MCPs,
+                // which is what actually distinguishes a fist from an open hand.
+                set(mcp + 1, off, mcpY - 0.010f, 0f)
+                set(mcp + 2, off, mcpY - 0.030f, 0f)
+                set(mcp + 3, off, mcpY - 0.055f, 0f)
+            }
         }
         h.visible = true
         h.confidence = 1f
@@ -188,6 +196,25 @@ class MetaPortLogicTest {
         val g = HandGestureResolver().resolve(h, 0.016f)
         assertEquals(HandModel.GESTURE_PINCH, g)
         assertTrue("pinch amount should be high: ${h.pinchAmount}", h.pinchAmount > 0.5f)
+    }
+
+    @Test
+    fun `a gesture change must hold before it replaces the previous one`() {
+        val h = syntheticHand(open = true)
+        val r = HandGestureResolver()
+        assertEquals("first classification is immediate", HandModel.GESTURE_OPEN, r.resolve(h, 0.016f))
+
+        // Fold into a fist: the switch must not land on the very next frame.
+        val fist = syntheticHand(open = false)
+        fist.visible = true
+        fist.confidence = 1f
+        fist.palmSize = h.palmSize
+        fist.rebuildPalmBasis()
+        assertEquals("still holds the previous gesture", HandModel.GESTURE_OPEN, r.resolve(fist, 0.016f))
+
+        var g = HandModel.GESTURE_OPEN
+        for (i in 0 until 12) g = r.resolve(fist, 0.016f)
+        assertEquals("switches once the new pose is stable", HandModel.GESTURE_FIST, g)
     }
 
     @Test
