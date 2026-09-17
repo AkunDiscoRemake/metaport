@@ -1,0 +1,68 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.metaport.xr'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.metaport.xr"
+        minSdk 24
+        targetSdk 34
+        versionCode 10
+        versionName "3.0-spatial"
+
+        // MetaPort ships 64-bit native ARCore libs only; armeabi-v7a is not
+        // supported by current ARCore builds.
+        ndk {
+            abiFilters 'arm64-v8a', 'x86_64'
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+            applicationIdSuffix ""
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+        freeCompilerArgs += ['-Xjvm-default=all']
+    }
+
+    packagingOptions {
+        resources {
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}', '/META-INF/DEPENDENCIES', '/META-INF/INDEX.LIST']
+        }
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.annotation:annotation:1.7.1'
+    // ARCore: 6DOF SLAM (VIO), plane / environment tracking, anchors, depth, camera passthrough.
+    implementation "com.google.ar:core:$arcore_version"
+}

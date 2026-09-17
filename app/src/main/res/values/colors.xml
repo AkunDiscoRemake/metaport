@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="metaport_bg">#FF05060E</color>
+    <color name="metaport_cyan">#FF24E0FF</color>
+    <color name="metaport_magenta">#FFFF3DA6</color>
+    <color name="metaport_amber">#FFFFC24B</color>
+    <color name="metaport_violet">#FF7B5CFF</color>
+    <color name="metaport_panel">#14000000</color>
+    <color name="ic_launcher_background">#FF07091A</color>
+</resources>

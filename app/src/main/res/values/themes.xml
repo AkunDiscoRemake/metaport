@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MetaPort" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/metaport_bg</item>
+        <item name="android:statusBarColor">@color/metaport_bg</item>
+        <item name="android:navigationBarColor">@color/metaport_bg</item>
+        <item name="android:colorAccent">@color/metaport_cyan</item>
+    </style>
+
+    <style name="Theme.MetaPort.Fullscreen" parent="Theme.MetaPort">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+</resources>
