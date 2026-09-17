@@ -33,7 +33,7 @@ class FontAtlas(bold: Boolean = true, private val typeface: Typeface? = null) {
         textSize = FONT_PX
         typeface = this@FontAtlas.typeface
             ?: Typeface.create(Typeface.DEFAULT, if (bold) Typeface.BOLD else Typeface.NORMAL)
-        isLinearText = true
+        if (android.os.Build.VERSION.SDK_INT >= 28) isLinearText = true
     }
 
     init {
@@ -72,7 +72,7 @@ class FontAtlas(bold: Boolean = true, private val typeface: Typeface? = null) {
         bmp.recycle()
     }
 
-    fun glyph(code: Int): Glyph? {
+    private fun glyph(code: Int): Glyph? {
         if (code in 0..255) glyphs[code]?.let { return it }
         return glyphs['?'.code]
     }

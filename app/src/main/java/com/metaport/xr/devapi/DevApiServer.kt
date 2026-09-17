@@ -279,11 +279,11 @@ async function tick(){
   const g=await j('/api/v1/games');
   document.getElementById('games').textContent=JSON.stringify(g,null,1);
   document.getElementById('gameBtns').innerHTML=(g.games||[]).map(x=>
-    `<button onclick="fetch('/api/v1/games/${x.id}/launch',{method:'POST'})">${x.title||x.id}</button>`).join('');
+    `<button onclick="fetch('/api/v1/games/${'$'}{x.id}/launch',{method:'POST'})">${'$'}{x.title||x.id}</button>`).join('');
   const e=await j('/api/v1/environments');
   document.getElementById('envs').textContent=JSON.stringify(e,null,1);
   document.getElementById('envBtns').innerHTML=(e.environments||[]).map(x=>
-    `<button onclick="fetch('/api/v1/environments/${x.id}',{method:'POST'})">${x.name||x.id}</button>`).join('');
+    `<button onclick="fetch('/api/v1/environments/${'$'}{x.id}',{method:'POST'})">${'$'}{x.name||x.id}</button>`).join('');
  }catch(err){document.getElementById('status').textContent='offline: '+err}
 }
 function inp(a){fetch('/api/v1/input',{method:'POST',headers:{'Content-Type':'application/json'},

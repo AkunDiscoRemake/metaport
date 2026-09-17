@@ -19,6 +19,8 @@ jobs:
     name: Build MetaPort APK (Cardboard VR + ARCore 6DOF)
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -66,8 +68,22 @@ jobs:
         run: |
           set -o pipefail
           gradle assembleDebug assembleRelease --stacktrace --no-daemon 2>&1 | tee /tmp/gradle.log
+          STATUS=${PIPESTATUS[0]}
           echo "=== APKs ==="
-          find app/build/outputs -name '*.apk' -type f -exec ls -lh {} \;
+          find app/build/outputs -name '*.apk' -type f -exec ls -lh {} \; || true
+          # Surface compiler diagnostics as check-run annotations so they are
+          # readable through the GitHub API.
+          if [ "$STATUS" -ne 0 ]; then
+            echo "=== Compiler diagnostics ==="
+            grep -aE "^e: |error:|Caused by:|What went wrong|Execution failed for task" /tmp/gradle.log \
+              | head -60 | while IFS= read -r line; do
+                  short=$(printf '%s' "$line" | cut -c1-260)
+                  echo "::error title=MetaPort build::${short}"
+                done
+            ERRS=$(grep -acE "^e: " /tmp/gradle.log || true)
+            echo "::error title=Kotlin errors::total kotlin compiler errors: ${ERRS}"
+          fi
+          exit $STATUS
 
       - name: Upload debug APK
         if: always()

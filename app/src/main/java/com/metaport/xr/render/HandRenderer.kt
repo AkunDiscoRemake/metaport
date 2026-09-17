@@ -169,10 +169,7 @@ class MixedRealityLayer {
         p.setFloat("uScanline", scanline)
         p.setFloat("uTime", time)
 
-        // ARCore gives four corner UVs for a fullscreen quad.
-        val mesh = pipeline.screenQuad
-        mesh.draw()
-        // UV transform is folded into the vertex data via a tiny dynamic quad.
+        // ARCore supplies four corner UVs for a fullscreen quad; upload them and draw.
         dynamicQuad(pipeline, uvs)
     }
 

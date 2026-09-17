@@ -9,7 +9,7 @@ import com.metaport.xr.stereo.ViewerProfile
 interface RuntimeApi {
     val uiRoot: UiRoot
     val profile: ViewerProfile
-    fun launchGame(id: String)
+    fun startGame(id: String)
     fun exitToHome()
     fun selectEnvironment(id: String): Boolean
     fun setMixedReality(on: Boolean)
@@ -94,7 +94,7 @@ class HomeHub(private val rt: RuntimeApi) {
         for ((i, g) in games.take(8).withIndex()) {
             val col = i % cols
             val row = i / cols
-            val b = Button(g.title, Theme.TEXT_BODY) { rt.launchGame(g.id) }
+            val b = Button(g.title, Theme.TEXT_BODY) { rt.startGame(g.id) }
             b.subtitle = "${g.category} · ${g.tagline}"
             b.accentIndex = g.accentIndex
             b.width = 0.335f

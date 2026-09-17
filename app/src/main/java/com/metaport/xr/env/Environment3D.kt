@@ -71,7 +71,7 @@ abstract class Environment3D {
             gridModel, ctx.headX, gridY, ctx.headZ, 0f, 0f, 0f, 200f, 1f, 200f
         )
         pipeline.drawGrid(
-            gridModel, currentView, pipeline.viewProjection,
+            gridModel, currentView, currentProj,
             gridColor[0], gridColor[1], gridColor[2], gridColor[3],
             gridAccent[0], gridAccent[1], gridAccent[2],
             gridCell, gridThickness, gridFade, gridPulse
@@ -80,6 +80,7 @@ abstract class Environment3D {
 
     private val gridModel = FloatArray(16)
     var currentView = FloatArray(16)
+    var currentProj = FloatArray(16)
 
     fun infoMap(): LinkedHashMap<String, Any> {
         val m = LinkedHashMap<String, Any>()

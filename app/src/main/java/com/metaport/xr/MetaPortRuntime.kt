@@ -326,6 +326,7 @@ class MetaPortRuntime(
         scene.clear()
         env?.let {
             it.currentView = viewHead
+            it.currentProj = projEye
             it.render(scene, pipeline, envCtx)
         }
         if (mrEnabled) mrLayer.renderPlanes(scene, arCore, time)
@@ -389,20 +390,11 @@ class MetaPortRuntime(
         uiCtx.time = time
         uiCtx.globalAlpha = 1f
 
-        val scale = settings.uiScale
-        for (p in uiRoot.panels) {
-            if (p.appear <= 0.001f) continue
-            p.updateTransform()
-            // Scale the panel about its own centre.
-            val m = p.worldMatrix
-            val scaled = uiCtx.scratch
-            System.arraycopy(m, 0, scaled, 0, 16)
-            if (scale != 1f) {
-                for (i in 0..10) scaled[i] *= scale
-            }
-            uiCtx.panelMatrix = scaled
-            // Reuse the panel's own render path (it rebuilds the matrix itself).
-            p.render(uiCtx, pipeline)
+        for (panel in uiRoot.panels) {
+            if (panel.appear <= 0.001f) continue
+            panel.scale = settings.uiScale
+            panel.updateTransform()
+            panel.render(uiCtx, pipeline)
         }
     }
 
@@ -475,7 +467,7 @@ class MetaPortRuntime(
 
     // ================================================================= RuntimeApi
 
-    override fun launchGame(id: String) {
+    override fun startGame(id: String) {
         pendingGameId = id
     }
 

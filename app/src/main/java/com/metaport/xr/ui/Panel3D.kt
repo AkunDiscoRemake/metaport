@@ -26,12 +26,16 @@ object UiAssets {
         reticleDot = MeshGen.sphere(1f, 14, 10)
     }
 
+    /**
+     * A quad of exactly the requested size. Widget model matrices only carry a
+     * translation, so the geometry itself must be correctly dimensioned; the
+     * rounded corners and border come from the UI shader's SDF.
+     */
     fun buttonMesh(w: Float, h: Float): Mesh {
-        val key = ((w * 2000).toInt().toLong() shl 32) or (h * 2000).toInt().toLong()
+        val key = ((w * 2000).toInt().toLong() shl 32) or ((h * 2000).toInt().toLong() and 0xFFFFFFFFL)
         cache[key]?.let { return it }
-        // A single quad serves every button: the shader does the rounded corners,
-        // and the model matrix supplies the size.
-        val m = unitQuad ?: MeshGen.quadXY(1f, 1f).also { unitQuad = it }
+        val m = MeshGen.quadXY(w, h)
+        cache[key] = m
         return m
     }
 
@@ -87,6 +91,17 @@ class Panel3D(
     val right = FloatArray(3)
     val up = FloatArray(3)
     val normal = FloatArray(3)
+
+    /**
+     * Panel-local scratch. Kept separate from UiRenderContext.scratch so widget
+     * rendering can never clobber the matrix the panel itself is using.
+     */
+    private val scaledMatrix = FloatArray(16)
+    private val panelLocal = FloatArray(16)
+    private val panelMvp = FloatArray(16)
+
+    /** Uniform scale applied about the panel centre (UI scale setting). */
+    var scale = 1f
 
     private var titleMesh: TextMesh? = null
     private var subMesh: TextMesh? = null
@@ -148,18 +163,18 @@ class Panel3D(
     fun render(ctx: UiRenderContext, pipeline: Pipeline) {
         if (appear <= 0.001f) return
         ctx.pipeline = pipeline
-        ctx.panelMatrix = worldMatrix
         ctx.globalAlpha = opacity * appear
 
         val acc = Theme.accent(accentIndex)
-        val s = 0.92f + 0.08f * appear
+        val s = (0.92f + 0.08f * appear) * scale
 
-        // Slight scale-in around the panel centre.
-        val scaled = ctx.scratch
+        // Scale-in about the panel centre.
+        val scaled = scaledMatrix
         System.arraycopy(worldMatrix, 0, scaled, 0, 16)
         for (i in 0..10) scaled[i] *= s
 
-        val mvp = FloatArray(16)
+        val mvp = panelMvp
+        val local = panelLocal
         Mat4.multiply(mvp, 0, pipeline.viewProjection, 0, scaled, 0)
 
         // Glass body.
@@ -187,9 +202,7 @@ class Panel3D(
         if (showHeader) {
             val headerH = 0.062f
             val hy = height * 0.5f - headerH * 0.5f - 0.012f
-            Mat4.compose(scaled, 0f, hy, widgetZ, 0f, 0f, 0f, headerH, width * 0.98f, 1f, )
-            // Build in panel space then to world.
-            val local = FloatArray(16)
+            // Build in panel space, then lift into world space.
             Mat4.compose(local, 0f, hy, widgetZ, 0f, 0f, 0f, width * 0.98f, headerH, 1f)
             Mat4.multiply(scaled, 0, worldMatrix, 0, local, 0)
             Mat4.multiply(mvp, 0, pipeline.viewProjection, 0, scaled, 0)
@@ -233,7 +246,6 @@ class Panel3D(
                 sm.wrapWidth = width * 0.92f
                 sm.maxLines = 3
                 sm.set(sub)
-                val local = FloatArray(16)
                 Mat4.compose(
                     local, -width * 0.46f, height * 0.5f - 0.09f, widgetZ + 0.003f,
                     0f, 0f, 0f, 1f, 1f, 1f
