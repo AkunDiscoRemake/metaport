@@ -13,7 +13,7 @@ import com.google.ar.core.Plane
 import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
-import com.google.ar.core.ViewCoordinates2d
+import com.google.ar.core.Coordinates2d
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.UnavailableException
 
@@ -98,7 +98,7 @@ class ArCoreHost(private val activity: Activity) {
             val config = Config(s)
             config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
             config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-            config.lightEstimationMode = Config.LightEstimationMode.AMBIENT_LIGHT
+            config.lightEstimationMode = Config.LightEstimationMode.AMBIENT_INTENSITY
             config.focusMode = Config.FocusMode.AUTO
             depthSupported = s.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
             if (depthSupported) config.depthMode = Config.DepthMode.AUTOMATIC
@@ -110,8 +110,9 @@ class ArCoreHost(private val activity: Activity) {
             Log.i(TAG, "ARCore session created (depth=$depthSupported)")
             true
         } catch (e: UnavailableException) {
-            lastError = "ARCore unavailable: ${e.javaClass.simpleName}"
-            Log.w(TAG, lastError)
+            val msg = "ARCore unavailable: ${e.javaClass.simpleName}"
+            lastError = msg
+            Log.w(TAG, msg)
             false
         } catch (t: Throwable) {
             lastError = "ARCore init failed: ${t.message}"
@@ -188,7 +189,7 @@ class ArCoreHost(private val activity: Activity) {
 
         val le = f.lightEstimate
         if (le != null && le.state == com.google.ar.core.LightEstimate.State.VALID) {
-            pixelIntensity = le.pixelIntensity()
+            pixelIntensity = le.pixelIntensity
             lightValid = true
         } else {
             lightValid = false
@@ -215,7 +216,7 @@ class ArCoreHost(private val activity: Activity) {
             p.centerPose.toMatrix(info.center, 0)
             info.extentX = p.extentX
             info.extentZ = p.extentZ
-            info.isHorizontalUp = p.type == Plane.Type.HORIZONTAL_UP
+            info.isHorizontalUp = p.type == Plane.Type.HORIZONTAL_UPWARD_FACING
             info.isWall = p.type == Plane.Type.VERTICAL
             info.tracked = p.trackingState == TrackingState.TRACKING
             val poly = p.polygon
@@ -261,14 +262,15 @@ class ArCoreHost(private val activity: Activity) {
      * samples the camera texture with the correct display orientation.
      */
     fun cameraBackgroundUvs(frame: Frame, out: FloatArray) {
+        // Counter-clockwise NDC corners of the fullscreen quad.
         ndcQuad[0] = -1f; ndcQuad[1] = -1f
         ndcQuad[2] = -1f; ndcQuad[3] = 1f
         ndcQuad[4] = 1f; ndcQuad[5] = -1f
         ndcQuad[6] = 1f; ndcQuad[7] = 1f
         try {
             frame.transformCoordinates2d(
-                ViewCoordinates2d.OPENGL_NORMALIZED_DEVICE_COORDINATES, 4, ndcQuad,
-                ViewCoordinates2d.TEXTURE_NORMALIZED, uvQuad
+                Coordinates2d.OPENGL_NORMALIZED_DEVICE_COORDINATES, ndcQuad,
+                Coordinates2d.TEXTURE_NORMALIZED, uvQuad
             )
             System.arraycopy(uvQuad, 0, out, 0, 8)
         } catch (t: Throwable) {

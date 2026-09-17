@@ -52,7 +52,7 @@ import javax.microedition.khronos.opengles.GL10
  */
 class MetaPortRuntime(
     private val activity: Activity,
-    val profile: ViewerProfile,
+    override val profile: ViewerProfile,
     val settings: RuntimeSettings,
     val cardboardInput: CardboardInput
 ) : GLSurfaceView.Renderer, RuntimeApi, DevApiServer.Host {
