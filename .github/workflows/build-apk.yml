@@ -11,6 +11,9 @@ concurrency:
   group: apk-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GRADLE_VERSION: "7.6.4"
+
 jobs:
   build:
     name: Build MetaPort APK (Cardboard VR + ARCore 6DOF)
@@ -27,9 +30,9 @@ jobs:
 
       - name: Show Android SDK
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          ls "$ANDROID_HOME/platforms" 2>/dev/null || true
-          ls "$ANDROID_HOME/build-tools" 2>/dev/null || true
+          echo "ANDROID_HOME=${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" 2>/dev/null || true
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" 2>/dev/null || true
 
       - name: Accept licenses + install SDK pieces
         run: |
@@ -38,16 +41,31 @@ jobs:
           "$SDK/cmdline-tools/latest/bin/sdkmanager" \
             "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1 || true
           printf 'sdk.dir=%s\n' "$SDK" > local.properties
+          cat local.properties
 
-      - name: Generate Gradle wrapper (7.6.4)
+      # Self-contained Gradle provisioning: no third-party Gradle action, no
+      # committed wrapper jar. Uses a runner-local cache directory.
+      - name: Provision Gradle ${{ env.GRADLE_VERSION }}
         run: |
-          gradle wrapper --gradle-version 7.6.4 --distribution-type bin --no-daemon
-          chmod +x gradlew
+          set -e
+          DIST="$HOME/.gradle-dist/gradle-$GRADLE_VERSION"
+          if [ -x "$DIST/bin/gradle" ]; then
+            echo "Cached Gradle found at $DIST"
+          else
+            mkdir -p "$HOME/.gradle-dist"
+            curl -fsSL --retry 3 \
+              -o /tmp/gradle.zip \
+              "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip"
+            unzip -q /tmp/gradle.zip -d "$HOME/.gradle-dist"
+            rm -f /tmp/gradle.zip
+          fi
+          echo "$DIST/bin" >> "$GITHUB_PATH"
+          "$DIST/bin/gradle" --version | head -6
 
       - name: Compile + assemble APKs
         run: |
           set -o pipefail
-          ./gradlew assembleDebug assembleRelease --stacktrace --no-daemon 2>&1 | tee /tmp/gradle.log
+          gradle assembleDebug assembleRelease --stacktrace --no-daemon 2>&1 | tee /tmp/gradle.log
           echo "=== APKs ==="
           find app/build/outputs -name '*.apk' -type f -exec ls -lh {} \;
 
@@ -95,7 +113,7 @@ jobs:
           body: |
             Native Android spatial VR/MR build from `${{ github.sha }}`.
 
-            - Cardboard stereo pipeline (official Google viewer optics + lens distortion)
+            - Cardboard stereo pipeline (Google viewer optics + lens distortion)
             - ARCore 6DOF SLAM, plane/anchor/depth tracking, camera passthrough MR
             - Hand tracking, spatial 3D UI, procedural environments, games, Dev API
           files: out/*.apk
